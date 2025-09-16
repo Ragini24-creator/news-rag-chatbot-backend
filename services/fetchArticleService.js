@@ -1,13 +1,12 @@
-const { fetchUrls } = require("../utils/rssUtils");
-const { fetchArticles } = require("../services/fetchArticles");
-const fs = require("fs");
+const { fetchUrls, fetchArticles } = require("../utils/rssUtils");
 
-const ingestArticles = async function () {
+
+module.exports.fetchRssArticles = async function () {
     try {
         const rssUrl = "https://feeds.bbci.co.uk/news/rss.xml";
         const urls = await fetchUrls(rssUrl)
 
-        let articles = []
+        let articles = [];
 
         for (const url of urls) {
             const article = await fetchArticles(url);
@@ -16,13 +15,10 @@ const ingestArticles = async function () {
             }
         }
 
-        fs.writeFileSync("articles.json", JSON.stringify(articles, null, 2));
-        console.log(`Saved ${articles.length} articles`);
+        return articles;
 
     } catch (err) {
         console.log("Error in ingestion", err.message);
     }
 
 }
-
-ingestArticles();
