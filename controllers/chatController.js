@@ -1,40 +1,48 @@
 const { askGemini } = require("../services/geminiService");
-const { v4: uuidv4 } = require("uuid");
-// const { getRedisClient } = require("../datastore/redisConnection"); // optional Redis for session/history
+const uuid = require("uuid");
+const { getRedisClient } = require('../datastore/redisClient')
+const SESSION_TTL = Number(process.env.SESSION_TTL || 7 * 24 * 3600);
+
 
 /**
+ * handleChatController
+ * 
  * Handles a single chat query from user
+ * 
  * @param {Request} req
  * @param {Response} res
  */
-async function handleChat(req, res) {
+module.exports.handleChatController = async function (req, res) {
     try {
-        const { query } = req.body;
+        const redis = getRedisClient();
+        const { sessionId, query } = req.body;
 
         if (!query) return res.status(400).json({ error: "Query is required" });
 
-        // Generate a sessionId if not provided
-        // const userSession = sessionId || uuidv4();
+        if (!sessionId) {
+            return res.status(400).json({ error: "sessionId is required" });
+        }
 
-        // Optional: save user query to Redis session
-        // const redisClient = getRedisClient();
-        // if (redisClient) {
-        //     await redisClient.lPush(`session:${userSession}`, JSON.stringify({ role: "user", content: query }));
-        // }
+        const sid = sessionId;
+
+        // Save user message
+        const userMsg = { id: uuid.v4(), role: 'user', text: query, ts: Date.now() };
+        await redis.rPush(`session:${sid}:history`, JSON.stringify(userMsg));
+        await redis.expire(`session:${sid}:history`, SESSION_TTL);
 
         // Run RAG + Gemini
         const answer = await askGemini(query);
 
-        // Optional: save bot response to Redis session
-        // if (redisClient) {
-        //     await redisClient.lPush(`session:${userSession}`, JSON.stringify({ role: "bot", content: answer }));
-        // }
+        const botMsg = { id: uuid.v4(), role: 'bot', text: answer, ts: Date.now() };
+        await redis.rPush(`session:${sid}:history`, JSON.stringify(botMsg));
+        await redis.expire(`session:${sid}:history`, SESSION_TTL);
 
-        return res.json({ answer });
+        return res.status(200).json({ sessionId: sid, answer });
+
     } catch (err) {
-        console.error("Chat error:", err);
+        console.error("Error occurred in handleChatController :: ", err);
+
         res.status(500).json({ error: "Internal server error" });
     }
 }
 
-module.exports = { handleChat };

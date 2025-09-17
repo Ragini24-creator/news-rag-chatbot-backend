@@ -4,10 +4,9 @@ const cors = require("cors")
 
 dotenv.config()
 
-const { fetchRssArticles } = require('./services/fetchArticleService.js')
-const { initializeQdrantClient, setupCollection } = require('./datastore/qdrantConnection');
-const { insertDocs } = require('./services/insertDocs.js');
+const { initializeQdrantClient } = require('./datastore/qdrantConnection');
 const routes = require('./routes/chatRoutes.js')
+const { initializeRedisClient } = require('./datastore/redisClient.js')
 
 const app = express()
 
@@ -17,13 +16,11 @@ app.use("/api", routes)
 
 
 // Start server
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
     try {
         initializeQdrantClient();
-        // await setupCollection("news_chatbot", 1024)
-        // const articles = await fetchRssArticles();
-        // await insertDocs('news_chatbot', articles);
+        await initializeRedisClient();
 
         console.log(`Server running on port ${PORT}`);
     } catch (err) {

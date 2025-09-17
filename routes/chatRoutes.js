@@ -1,9 +1,14 @@
 const express = require("express");
-const { handleChat } = require("../controllers/chatController");
+const { handleChatController } = require("../controllers/chatController");
+const { createSessionController } = require('../controllers/createSessionController');
+const { clearSessionController } = require('../controllers/clearSessionController')
+const { fetchChatHistoryController } = require('../controllers/fetchChatHistoryController');
 
 const router = express.Router();
 
-// POST /api/chat
-router.post("/users/chat", handleChat);
+router.get("/users/history/:sessionId", fetchChatHistoryController);
+router.post("/users/session/create", createSessionController);
+router.post("/users/chat", handleChatController);
+router.delete("/users/session/:sessionId", clearSessionController)
 
 module.exports = router;
