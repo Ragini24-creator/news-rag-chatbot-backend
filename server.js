@@ -10,7 +10,15 @@ const { initializeRedisClient } = require('./datastore/redisClient.js')
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+    origin: [
+        "https://newsmind-ui.onrender.com", // your deployed frontend
+        "http://localhost:3000"             // for local dev
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+}));
+
 app.use(express.json())
 app.use("/api", routes)
 
