@@ -105,7 +105,37 @@ node server.js
 - **Embedding truncation:** Article content is truncated to 6000 words to comply with Jina token limits.  
 - **Session handling:** Each user session is stored in Redis. History is persisted per `sessionId`.  
 - **Vector search:** Top-k passages are retrieved from Qdrant for each user query before calling Gemini.  
-- **Error handling:** Robust handling for missing `sessionId`, API failures, and connection issues.  
+- **Error handling:** Robust handling for missing `sessionId`, API failures, and connection issues.
+
+## 🕒 TTL and ⚡ Cache Warming
+
+### TTL (Time-to-Live)
+- A **7-day TTL** is already implemented for each chat session in Redis.  
+- This ensures old sessions are automatically cleaned up without manual intervention, preventing unbounded memory growth.  
+
+**Code (already implemented):**
+```js
+// Store session history with 7-day TTL (in seconds)
+await redisClient.set(sessionId, JSON.stringify(chatHistory), "EX", 7 * 24 * 60 * 60);
+
+
+
+### ⚡ Cache Warming
+
+To ensure faster responses for frequently accessed content (like FAQs or trending articles), we can proactively “warm” the cache at startup.
+
+**Example (conceptual):**
+```js
+async function warmCache() {
+  const popularQueries = ["India news", "AI trends", "Stock market today"];
+
+  for (const query of popularQueries) {
+    const answer = await runRagPipeline(query); 
+    await redis.set(`cache:${query}`, answer, "EX", 86400); // keep for 1 day
+  }
+}
+
+```
 
 ### 💡 Potential Improvements
 
