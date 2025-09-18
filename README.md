@@ -118,7 +118,7 @@ node server.js
 // Store session history with 7-day TTL (in seconds)
 await redisClient.set(sessionId, JSON.stringify(chatHistory), "EX", 7 * 24 * 60 * 60);
 
-
+```
 
 ### ⚡ Cache Warming
 
