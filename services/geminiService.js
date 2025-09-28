@@ -1,8 +1,35 @@
 const { searchDocs } = require("./searchService");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// initialize Gemini client
+const genAI = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+});
+
+
+const geminiModel = {
+    generateContent: async (prompt) => {
+        const response = await genAI.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+
+
+        return {
+            response: {
+                candidates: [
+                    {
+                        content: {
+                            parts: [
+                                { text: response.candidates[0].content.parts[0].text }
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+    },
+};
 
 /**
  * Runs RAG pipeline: fetch top-k passages and ask Gemini
@@ -23,14 +50,14 @@ async function askGemini(query) {
             .slice(0, maxChars);
 
         const prompt = `
-            You are a helpful assistant.
-            User query: ${query}
+      You are a helpful assistant.
+      User query: ${query}
 
-            Relevant passages:
-            ${context}
+      Relevant passages:
+      ${context}
 
-            Please provide a concise and accurate answer using the passages above.
-        `;
+      Please provide a concise and accurate answer using the passages above.
+    `;
 
         const response = await geminiModel.generateContent(prompt);
         const finalAnswer = response.response.candidates[0].content.parts[0].text;
