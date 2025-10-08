@@ -146,7 +146,9 @@ async function warmCache() {
 
 ###  🧠 Sample Data
 
-For testing or demo purposes, a small set of news snippets has been added in the file sample_data.txt
+For testing or demo purposes, a small set of news snippets has been added in the file 
+
+```sample_qdrant_data.txt```
 
 You can use this file to understand the kind of content the chatbot retrieves and responds to.
 (Note: The actual deployed version uses a larger corpus stored in Qdrant for semantic search.)
